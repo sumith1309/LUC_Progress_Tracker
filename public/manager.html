@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow — Manager Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo"><span>TaskFlow</span></div>
+
+            <nav class="sidebar-nav">
+                <a class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item" data-view="analytics" onclick="switchView('analytics')">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Analytics</span>
+                </a>
+                <a class="nav-item" data-view="team" onclick="switchView('team')">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Team</span>
+                </a>
+                <div class="sidebar-divider"></div>
+                <a class="nav-item" data-view="notifications" onclick="switchView('notifications')">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span>Notifications</span>
+                    <span class="nav-badge hidden" id="sidebarBadge"></span>
+                </a>
+                <div class="sidebar-divider"></div>
+                <a class="nav-item" onclick="toggleSound()">
+                    <svg class="nav-icon" id="soundIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <span id="soundLabel">Sound On</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Team Presence</div>
+            <div class="sidebar-presence" id="sidebarPresence"></div>
+
+            <button class="sidebar-create-btn" onclick="openCreateModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Create Task</span>
+            </button>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar avatar-sm" id="sidebarAvatar"></div>
+                    <div>
+                        <div class="sidebar-user-name" id="sidebarUserName"></div>
+                        <div class="sidebar-user-role">Manager</div>
+                    </div>
+                </div>
+                <button class="sidebar-switch-btn" onclick="switchUser()">Switch User</button>
+            </div>
+        </aside>
+
+        <!-- ── MAIN CONTENT ── -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="hamburger-btn" onclick="toggleSidebar()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <h2 class="topbar-title" id="pageTitle">Dashboard</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-search">
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" placeholder="Search tasks..." id="searchInput" oninput="handleSearch(this.value)">
+                    </div>
+                    <button class="topbar-notif-btn" onclick="switchView('notifications')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span id="notification-badge"></span>
+                    </button>
+                    <div class="topbar-avatar" id="topbarAvatar"></div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+
+                <!-- VIEW: Dashboard (default) -->
+                <section class="content-view active" id="viewDashboard">
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="skeleton skeleton-stat"></div>
+                        <div class="skeleton skeleton-stat"></div>
+                        <div class="skeleton skeleton-stat"></div>
+                        <div class="skeleton skeleton-stat"></div>
+                    </div>
+                    <div class="kanban-board" id="kanbanBoard">
+                        <div class="skeleton skeleton-card" style="min-height:300px"></div>
+                        <div class="skeleton skeleton-card" style="min-height:300px"></div>
+                        <div class="skeleton skeleton-card" style="min-height:300px"></div>
+                        <div class="skeleton skeleton-card" style="min-height:300px"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW: Analytics -->
+                <section class="content-view" id="viewAnalytics">
+                    <div class="charts-grid" id="chartsGrid"></div>
+                    <h3 class="mb-xl" style="font-family: var(--font-body); font-size: var(--fs-md); font-weight: 700;">Employee Performance</h3>
+                    <div class="employee-drill" id="employeeDrill"></div>
+                </section>
+
+                <!-- VIEW: Team -->
+                <section class="content-view" id="viewTeam">
+                    <div class="team-grid" id="teamGrid"></div>
+                </section>
+
+                <!-- VIEW: Notifications -->
+                <section class="content-view" id="viewNotifications">
+                    <div class="notifications-header">
+                        <h3 style="font-family: var(--font-body); font-size: var(--fs-md); font-weight: 700;">Notifications</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+                    </div>
+                    <div class="notification-list" id="notificationList">
+                        <div class="notification-empty">Loading notifications...</div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TASK DETAIL DRAWER ── -->
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+    <div class="drawer" id="taskDrawer">
+        <div class="drawer-header">
+            <button class="drawer-close-btn" onclick="closeDrawer()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="drawer-body" id="drawerBody"></div>
+        <div class="drawer-footer" id="drawerFooter"></div>
+    </div>
+
+    <!-- ── CREATE TASK MODAL ── -->
+    <div class="modal-backdrop" id="createBackdrop" onclick="closeCreateModal()"></div>
+    <div class="modal" id="createModal">
+        <div class="modal-header">
+            <h3>Create New Task</h3>
+            <button class="modal-close-btn" onclick="closeCreateModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="createTitle">Title *</label>
+                <input class="form-input" id="createTitle" type="text" placeholder="Enter task title" required>
+            </div>
+            <div class="form-group">
+                <label for="createDesc">Description</label>
+                <textarea class="form-textarea" id="createDesc" placeholder="Describe the task..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="createAssign">Assign To *</label>
+                <select class="form-select" id="createAssign">
+                    <option value="">Select employee...</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="createPriority">Priority *</label>
+                    <select class="form-select" id="createPriority">
+                        <option value="">Select...</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="createDue">Due Date *</label>
+                    <input class="form-input" id="createDue" type="date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="createHours">Estimated Hours</label>
+                <input class="form-input" id="createHours" type="number" min="0" step="0.5" placeholder="e.g. 4">
+            </div>
+            <div id="createError" class="form-error hidden"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
+            <button class="btn btn-accent" id="createSubmitBtn" onclick="submitCreateTask()">Create Task</button>
+        </div>
+    </div>
+
+    <!-- ── CONFIRM DELETE MODAL ── -->
+    <div class="modal-backdrop" id="confirmBackdrop" onclick="closeConfirm()"></div>
+    <div class="modal" id="confirmModal" style="width:400px">
+        <div class="modal-body">
+            <div class="confirm-dialog">
+                <div class="confirm-dialog__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </div>
+                <div class="confirm-dialog__title">Delete Task</div>
+                <div class="confirm-dialog__message" id="confirmMessage">Are you sure you want to delete this task? This action cannot be undone.</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        // ── Auth Guard ──
+        var token = sessionStorage.getItem('taskflow_token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // ── State ──
+        var currentUser = null;
+        var allTasks = [];
+        var allUsers = [];
+        var openDrawerTaskId = null;
+        var chartInstances = {};
+        var searchTerm = '';
+
+        // ── DOM Cache ──
+        var els = {
+            statsGrid: document.getElementById('statsGrid'),
+            kanbanBoard: document.getElementById('kanbanBoard'),
+            chartsGrid: document.getElementById('chartsGrid'),
+            employeeDrill: document.getElementById('employeeDrill'),
+            teamGrid: document.getElementById('teamGrid'),
+            notificationList: document.getElementById('notificationList'),
+            sidebarPresence: document.getElementById('sidebarPresence'),
+            sidebarBadge: document.getElementById('sidebarBadge'),
+            sidebarAvatar: document.getElementById('sidebarAvatar'),
+            sidebarUserName: document.getElementById('sidebarUserName'),
+            topbarAvatar: document.getElementById('topbarAvatar'),
+            pageTitle: document.getElementById('pageTitle'),
+            drawerBackdrop: document.getElementById('drawerBackdrop'),
+            taskDrawer: document.getElementById('taskDrawer'),
+            drawerBody: document.getElementById('drawerBody'),
+            drawerFooter: document.getElementById('drawerFooter'),
+            createBackdrop: document.getElementById('createBackdrop'),
+            createModal: document.getElementById('createModal'),
+            createAssign: document.getElementById('createAssign'),
+            confirmBackdrop: document.getElementById('confirmBackdrop'),
+            confirmModal: document.getElementById('confirmModal'),
+            confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+            createError: document.getElementById('createError'),
+            createSubmitBtn: document.getElementById('createSubmitBtn'),
+            searchInput: document.getElementById('searchInput')
+        };
+
+        // ── Utilities ──
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function getInitial(name) { return name ? name.charAt(0).toUpperCase() : '?'; }
+
+        function getPriorityClass(p) { return 'badge-priority-' + p; }
+
+        function getStatusLabel(s) {
+            var map = { todo: 'To Do', in_progress: 'In Progress', review: 'In Review', completed: 'Completed' };
+            return map[s] || s;
+        }
+
+        function getDueLabel(dueDate) {
+            var d = TaskFlowApp.daysUntil(dueDate);
+            if (d < 0) return '<span class="task-card__due--overdue">Overdue!</span>';
+            if (d === 0) return '<span class="task-card__due--warning">Due today</span>';
+            if (d <= 3) return '<span class="task-card__due--warning">' + d + 'd left</span>';
+            return d + 'd left';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        function getValidTransitions(currentStatus) {
+            // Manager transitions
+            var map = {
+                todo: [],
+                in_progress: ['todo'],
+                review: ['completed', 'in_progress', 'todo'],
+                completed: ['todo']
+            };
+            return map[currentStatus] || [];
+        }
+
+        // ── Animate Counter ──
+        function animateCounter(el, target) {
+            var duration = 800;
+            var start = 0;
+            var startTime = null;
+            function step(ts) {
+                if (!startTime) startTime = ts;
+                var progress = Math.min((ts - startTime) / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(eased * target);
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        // ── Initialize ──
+        function init() {
+            fetch('/api/auth/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(function (r) {
+                if (!r.ok) return Promise.reject();
+                return r.json();
+            })
+            .then(function (user) {
+                    if (user.role !== 'manager') {
+                        sessionStorage.clear();
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    currentUser = user;
+                    TaskFlowApp.init(user, token);
+
+                    // Set UI identity
+                    els.sidebarAvatar.style.background = user.avatar_color;
+                    els.sidebarAvatar.textContent = getInitial(user.name);
+                    els.sidebarUserName.textContent = user.name;
+                    els.topbarAvatar.style.background = user.avatar_color;
+                    els.topbarAvatar.textContent = getInitial(user.name);
+
+                    // Load data
+                    loadUsers();
+                    loadDashboard();
+                    setupHooks();
+                })
+                .catch(function () {
+                    sessionStorage.clear();
+                    window.location.href = '/login.html';
+                });
+        }
+
+        function loadUsers() {
+            TaskFlowApp.api('/api/users').then(function (users) {
+                allUsers = users;
+                // Populate create modal assignee dropdown
+                var employees = users.filter(function (u) { return u.role === 'employee'; });
+                els.createAssign.innerHTML = '<option value="">Select employee...</option>';
+                employees.forEach(function (e) {
+                    els.createAssign.innerHTML += '<option value="' + e.id + '">' + escapeHtml(e.name) + '</option>';
+                });
+                renderPresence();
+            }).catch(function (err) {
+                console.error('[Manager] Failed to load users:', err);
+            });
+        }
+
+        // ── Dashboard & Kanban ──
+        function loadDashboard() {
+            Promise.all([
+                TaskFlowApp.api('/api/tasks'),
+                TaskFlowApp.api('/api/tasks/stats')
+            ]).then(function (results) {
+                allTasks = results[0];
+                renderStats(results[1]);
+                renderKanban(allTasks);
+            }).catch(function (err) {
+                console.error('[Manager] Failed to load dashboard:', err);
+            });
+        }
+
+        function renderStats(stats) {
+            var overdue = stats.overdue || 0;
+            els.statsGrid.innerHTML =
+                '<div class="stat-card glass-light glass-light--static" style="animation-delay:0ms">' +
+                    '<div class="stat-card__icon stat-card__icon--total"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>' +
+                    '<div class="stat-card__label">Total Tasks</div>' +
+                    '<div class="stat-card__value" id="statTotal">0</div>' +
+                '</div>' +
+                '<div class="stat-card glass-light glass-light--static" style="animation-delay:50ms">' +
+                    '<div class="stat-card__icon stat-card__icon--progress"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>' +
+                    '<div class="stat-card__label">In Progress</div>' +
+                    '<div class="stat-card__value" id="statProgress">0</div>' +
+                '</div>' +
+                '<div class="stat-card glass-light glass-light--static" style="animation-delay:100ms">' +
+                    '<div class="stat-card__icon stat-card__icon--completed"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
+                    '<div class="stat-card__label">Completed</div>' +
+                    '<div class="stat-card__value" id="statCompleted">0</div>' +
+                '</div>' +
+                '<div class="stat-card glass-light glass-light--static stat-card--overdue' + (overdue > 0 ? ' has-overdue' : '') + '" style="animation-delay:150ms">' +
+                    '<div class="stat-card__icon stat-card__icon--overdue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
+                    '<div class="stat-card__label">Overdue</div>' +
+                    '<div class="stat-card__value" id="statOverdue">0</div>' +
+                '</div>';
+
+            animateCounter(document.getElementById('statTotal'), stats.total || 0);
+            animateCounter(document.getElementById('statProgress'), (stats.by_status || {}).in_progress || 0);
+            animateCounter(document.getElementById('statCompleted'), (stats.by_status || {}).completed || 0);
+            animateCounter(document.getElementById('statOverdue'), overdue);
+        }
+
+        function renderKanban(tasks) {
+            var columns = { todo: [], in_progress: [], review: [], completed: [] };
+            var filtered = searchTerm
+                ? tasks.filter(function (t) { return t.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1; })
+                : tasks;
+
+            filtered.forEach(function (t) {
+                if (columns[t.status]) columns[t.status].push(t);
+            });
+
+            var statusOrder = ['todo', 'in_progress', 'review', 'completed'];
+            var statusLabels = { todo: 'To Do', in_progress: 'In Progress', review: 'In Review', completed: 'Completed' };
+
+            var html = '';
+            statusOrder.forEach(function (status) {
+                var col = columns[status];
+                html += '<div class="kanban-column">' +
+                    '<div class="kanban-column__header kanban-column__header--' + status + '">' +
+                        '<span class="kanban-column__title">' + statusLabels[status] + '</span>' +
+                        '<span class="kanban-column__count">' + col.length + '</span>' +
+                    '</div>' +
+                    '<div class="kanban-column__cards" id="kanbanCol_' + status + '">';
+
+                if (col.length === 0) {
+                    html += '<div class="kanban-empty">No tasks</div>';
+                } else {
+                    col.forEach(function (task, i) {
+                        html += renderTaskCard(task, i);
+                    });
+                }
+                html += '</div></div>';
+            });
+
+            els.kanbanBoard.innerHTML = html;
+        }
+
+        function renderTaskCard(task, index) {
+            var delay = (index || 0) * 50;
+            return '<div class="task-card glass-light" data-task-id="' + task.id + '" onclick="openDrawer(\'' + task.id + '\')" style="animation-delay:' + delay + 'ms">' +
+                '<div class="task-card__top">' +
+                    '<span class="badge ' + getPriorityClass(task.priority) + '">' + escapeHtml(task.priority) + '</span>' +
+                    '<span class="task-card__due">' + getDueLabel(task.due_date) + '</span>' +
+                '</div>' +
+                '<div class="task-card__title">' + escapeHtml(task.title) + '</div>' +
+                '<div class="task-card__bottom">' +
+                    '<div class="task-card__assignee">' +
+                        '<span class="task-card__assignee-dot" style="background:' + escapeHtml(task.assignee_color || '#999') + '"></span>' +
+                        '<span>' + escapeHtml(task.assignee_name || 'Unassigned') + '</span>' +
+                    '</div>' +
+                    '<div class="task-card__progress">' +
+                        '<div class="task-card__progress-bar"><div class="task-card__progress-fill" style="width:' + task.progress + '%"></div></div>' +
+                        '<span class="task-card__progress-text">' + task.progress + '%</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        // ── Task Detail Drawer ──
+        window.openDrawer = function (taskId) {
+            openDrawerTaskId = taskId;
+            TaskFlowApp.api('/api/tasks/' + taskId).then(function (task) {
+                renderDrawer(task);
+                els.drawerBackdrop.classList.add('open');
+                els.taskDrawer.classList.add('open');
+            }).catch(function (err) {
+                console.error('[Drawer] Failed to load task:', err);
+            });
+        };
+
+        window.closeDrawer = function () {
+            els.drawerBackdrop.classList.remove('open');
+            els.taskDrawer.classList.remove('open');
+            openDrawerTaskId = null;
+        };
+
+        function renderDrawer(task) {
+            var validTransitions = getValidTransitions(task.status);
+            var statusOptions = '<option value="' + task.status + '">' + getStatusLabel(task.status) + '</option>';
+            validTransitions.forEach(function (s) {
+                statusOptions += '<option value="' + s + '">' + getStatusLabel(s) + '</option>';
+            });
+
+            var employees = allUsers.filter(function (u) { return u.role === 'employee'; });
+            var assigneeOptions = '';
+            employees.forEach(function (e) {
+                var sel = e.id === task.assigned_to ? ' selected' : '';
+                assigneeOptions += '<option value="' + e.id + '"' + sel + '>' + escapeHtml(e.name) + '</option>';
+            });
+
+            var body =
+                '<h2 class="drawer-title">' + escapeHtml(task.title) + '</h2>' +
+                '<div class="drawer-meta">Created by ' + escapeHtml(task.creator_name || 'Manager') + ' · ' + TaskFlowApp.formatDate(task.created_at) + '</div>' +
+
+                '<div class="drawer-fields">' +
+                    '<div class="drawer-field">' +
+                        '<span class="drawer-field__label">Status</span>' +
+                        '<select class="form-select" onchange="updateTask(\'' + task.id + '\', {status: this.value})" style="height:32px; font-size:13px;">' + statusOptions + '</select>' +
+                    '</div>' +
+                    '<div class="drawer-field">' +
+                        '<span class="drawer-field__label">Priority</span>' +
+                        '<select class="form-select" onchange="updateTask(\'' + task.id + '\', {priority: this.value})" style="height:32px; font-size:13px;">' +
+                            '<option value="low"' + (task.priority === 'low' ? ' selected' : '') + '>Low</option>' +
+                            '<option value="medium"' + (task.priority === 'medium' ? ' selected' : '') + '>Medium</option>' +
+                            '<option value="high"' + (task.priority === 'high' ? ' selected' : '') + '>High</option>' +
+                            '<option value="critical"' + (task.priority === 'critical' ? ' selected' : '') + '>Critical</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="drawer-field">' +
+                        '<span class="drawer-field__label">Assigned To</span>' +
+                        '<select class="form-select" onchange="updateTask(\'' + task.id + '\', {assigned_to: this.value})" style="height:32px; font-size:13px;">' + assigneeOptions + '</select>' +
+                    '</div>' +
+                    '<div class="drawer-field">' +
+                        '<span class="drawer-field__label">Due Date</span>' +
+                        '<input class="form-input" type="date" value="' + (task.due_date ? task.due_date.split('T')[0] : '') + '" onchange="updateTask(\'' + task.id + '\', {due_date: this.value})" style="height:32px; font-size:13px;">' +
+                    '</div>' +
+                    '<div class="drawer-field">' +
+                        '<span class="drawer-field__label">Progress</span>' +
+                        '<div style="display:flex;align-items:center;gap:8px;">' +
+                            '<div class="drawer-progress-bar" style="flex:1"><div class="drawer-progress-fill" style="width:' + task.progress + '%"></div></div>' +
+                            '<span style="font-size:13px;font-weight:600;">' + task.progress + '%</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="drawer-field">' +
+                        '<span class="drawer-field__label">Est. Hours</span>' +
+                        '<input class="form-input" type="number" min="0" step="0.5" value="' + (task.estimated_hours || '') + '" onchange="updateTask(\'' + task.id + '\', {estimated_hours: parseFloat(this.value) || null})" style="height:32px; font-size:13px;">' +
+                    '</div>' +
+                '</div>';
+
+            // Description
+            if (task.description) {
+                body += '<div class="drawer-section-title">Description</div>' +
+                    '<div class="drawer-description">' + escapeHtml(task.description) + '</div>';
+            }
+
+            // Comments
+            var comments = task.comments || [];
+            body += '<div class="drawer-section-title">Comments (' + comments.length + ')</div>' +
+                '<div class="comments-list" id="drawerComments">';
+            if (comments.length === 0) {
+                body += '<div class="empty-state" style="padding:16px"><span class="text-sm text-muted">No comments yet</span></div>';
+            } else {
+                comments.forEach(function (c) {
+                    body += '<div class="comment-item">' +
+                        '<div class="avatar avatar-sm" style="background:' + escapeHtml(c.author_color || '#999') + '">' + getInitial(c.author_name) + '</div>' +
+                        '<div class="comment-item__body">' +
+                            '<div class="comment-item__header">' +
+                                '<span class="comment-item__name">' + escapeHtml(c.author_name) + '</span>' +
+                                '<span class="comment-item__time">' + TaskFlowApp.timeAgo(c.created_at) + '</span>' +
+                            '</div>' +
+                            '<div class="comment-item__text">' + escapeHtml(c.content) + '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+            }
+            body += '</div>' +
+                '<div class="comment-form">' +
+                    '<textarea id="drawerCommentInput" placeholder="Write a comment..."></textarea>' +
+                    '<button class="btn btn-accent btn-sm" onclick="submitComment(\'' + task.id + '\')">Send</button>' +
+                '</div>';
+
+            // Attachments
+            var attachments = task.attachments || [];
+            body += '<div class="drawer-section-title mt-xl">Attachments (' + attachments.length + ')</div>' +
+                '<div class="attachments-list" id="drawerAttachments">';
+            if (attachments.length === 0) {
+                body += '<div class="empty-state" style="padding:8px"><span class="text-sm text-muted">No attachments</span></div>';
+            } else {
+                attachments.forEach(function (a) {
+                    body += '<div class="attachment-item">' +
+                        '<svg class="attachment-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
+                        '<a class="attachment-item__name" href="/' + escapeHtml(a.filepath.replace('public/', '')) + '" target="_blank">' + escapeHtml(a.filename) + '</a>' +
+                        '<span class="attachment-item__size">' + formatFileSize(a.size) + '</span>' +
+                        '<button class="attachment-item__delete" onclick="event.stopPropagation(); deleteAttachment(\'' + a.id + '\', \'' + task.id + '\')">' +
+                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                        '</button>' +
+                    '</div>';
+                });
+            }
+            body += '</div>';
+
+            // Upload button
+            body += '<input type="file" id="drawerFileInput" style="display:none" onchange="uploadAttachment(\'' + task.id + '\')">' +
+                '<button class="upload-btn" onclick="document.getElementById(\'drawerFileInput\').click()">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+                    'Upload File' +
+                '</button>';
+
+            els.drawerBody.innerHTML = body;
+
+            // Footer: delete button
+            els.drawerFooter.innerHTML =
+                '<button class="btn btn-danger btn-sm" onclick="confirmDeleteTask(\'' + task.id + '\', \'' + escapeHtml(task.title).replace(/'/g, "\\'") + '\')">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                    'Delete Task' +
+                '</button>';
+        }
+
+        // ── Task CRUD ──
+        window.updateTask = function (taskId, changes) {
+            TaskFlowApp.api('/api/tasks/' + taskId, {
+                method: 'PATCH',
+                body: JSON.stringify(changes)
+            }).then(function () {
+                loadDashboard();
+                if (openDrawerTaskId === taskId) openDrawer(taskId);
+            }).catch(function (err) {
+                TaskFlowApp.showToast('Error', err.error || 'Failed to update task', 'overdue_warning');
+            });
+        };
+
+        window.submitComment = function (taskId) {
+            var input = document.getElementById('drawerCommentInput');
+            var content = input.value.trim();
+            if (!content) return;
+
+            TaskFlowApp.api('/api/tasks/' + taskId + '/comments', {
+                method: 'POST',
+                body: JSON.stringify({ content: content })
+            }).then(function () {
+                input.value = '';
+                if (openDrawerTaskId === taskId) openDrawer(taskId);
+            }).catch(function (err) {
+                TaskFlowApp.showToast('Error', err.error || 'Failed to post comment', 'overdue_warning');
+            });
+        };
+
+        window.uploadAttachment = function (taskId) {
+            var fileInput = document.getElementById('drawerFileInput');
+            if (!fileInput.files.length) return;
+
+            var formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/api/tasks/' + taskId + '/attachments', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('taskflow_token') },
+                body: formData
+            }).then(function (r) {
+                if (!r.ok) return r.json().then(function (e) { return Promise.reject(e); });
+                return r.json();
+            }).then(function () {
+                fileInput.value = '';
+                if (openDrawerTaskId === taskId) openDrawer(taskId);
+            }).catch(function (err) {
+                TaskFlowApp.showToast('Error', err.error || 'Failed to upload file', 'overdue_warning');
+            });
+        };
+
+        window.deleteAttachment = function (attachmentId, taskId) {
+            TaskFlowApp.api('/api/attachments/' + attachmentId, { method: 'DELETE' })
+                .then(function () {
+                    if (openDrawerTaskId === taskId) openDrawer(taskId);
+                })
+                .catch(function (err) {
+                    TaskFlowApp.showToast('Error', err.error || 'Failed to delete attachment', 'overdue_warning');
+                });
+        };
+
+        window.confirmDeleteTask = function (taskId, taskTitle) {
+            document.getElementById('confirmMessage').textContent = 'Are you sure you want to delete "' + taskTitle + '"? This action cannot be undone.';
+            els.confirmBackdrop.classList.add('open');
+            els.confirmModal.classList.add('open');
+
+            els.confirmDeleteBtn.onclick = function () {
+                TaskFlowApp.api('/api/tasks/' + taskId, { method: 'DELETE' })
+                    .then(function () {
+                        closeConfirm();
+                        closeDrawer();
+                        loadDashboard();
+                        TaskFlowApp.showToast('Task Deleted', '"' + taskTitle + '" has been deleted', 'task_deleted');
+                    })
+                    .catch(function (err) {
+                        TaskFlowApp.showToast('Error', err.error || 'Failed to delete task', 'overdue_warning');
+                    });
+            };
+        };
+
+        window.closeConfirm = function () {
+            els.confirmBackdrop.classList.remove('open');
+            els.confirmModal.classList.remove('open');
+        };
+
+        // ── Create Task Modal ──
+        window.openCreateModal = function (preAssign) {
+            els.createError.classList.add('hidden');
+            document.getElementById('createTitle').value = '';
+            document.getElementById('createDesc').value = '';
+            document.getElementById('createPriority').value = '';
+            document.getElementById('createHours').value = '';
+            els.createAssign.value = preAssign || '';
+
+            // Set min date to today
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('createDue').value = '';
+            document.getElementById('createDue').min = today;
+
+            els.createBackdrop.classList.add('open');
+            els.createModal.classList.add('open');
+            document.getElementById('createTitle').focus();
+        };
+
+        window.closeCreateModal = function () {
+            els.createBackdrop.classList.remove('open');
+            els.createModal.classList.remove('open');
+        };
+
+        window.submitCreateTask = function () {
+            var title = document.getElementById('createTitle').value.trim();
+            var description = document.getElementById('createDesc').value.trim();
+            var assigned_to = els.createAssign.value;
+            var priority = document.getElementById('createPriority').value;
+            var due_date = document.getElementById('createDue').value;
+            var estimated_hours = parseFloat(document.getElementById('createHours').value) || null;
+
+            // Validate
+            if (!title || !assigned_to || !priority || !due_date) {
+                els.createError.textContent = 'Please fill in all required fields.';
+                els.createError.classList.remove('hidden');
+                return;
+            }
+
+            els.createSubmitBtn.disabled = true;
+
+            var payload = { title: title, assigned_to: assigned_to, priority: priority, due_date: due_date };
+            if (description) payload.description = description;
+            if (estimated_hours) payload.estimated_hours = estimated_hours;
+
+            TaskFlowApp.api('/api/tasks', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(function () {
+                closeCreateModal();
+                loadDashboard();
+                TaskFlowApp.showToast('Task Created', '"' + title + '" has been created', 'info');
+            }).catch(function (err) {
+                els.createError.textContent = err.error || 'Failed to create task.';
+                els.createError.classList.remove('hidden');
+            }).finally(function () {
+                els.createSubmitBtn.disabled = false;
+            });
+        };
+
+        // ── Analytics ──
+        function loadAnalytics() {
+            Promise.all([
+                TaskFlowApp.api('/api/analytics/overview'),
+                TaskFlowApp.api('/api/analytics/team')
+            ]).then(function (results) {
+                renderCharts(results[0], results[1]);
+                renderEmployeeDrill(results[1].employees || []);
+            }).catch(function (err) {
+                console.error('[Analytics] Failed:', err);
+            });
+        }
+
+        function renderCharts(overview, teamData) {
+            var statusDist = teamData.status_distribution || overview;
+            var employees = teamData.employees || [];
+
+            els.chartsGrid.innerHTML =
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:0ms"><div class="chart-card__title">Task Distribution</div><canvas id="chartStatus"></canvas></div>' +
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:100ms"><div class="chart-card__title">Team Workload</div><canvas id="chartWorkload"></canvas></div>' +
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:200ms"><div class="chart-card__title">Priority Breakdown</div><canvas id="chartPriority"></canvas></div>' +
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:300ms"><div class="chart-card__title">Completion Trend</div><canvas id="chartTrend"></canvas></div>';
+
+            // Destroy old charts
+            Object.keys(chartInstances).forEach(function (k) { chartInstances[k].destroy(); });
+            chartInstances = {};
+
+            var chartFont = { family: "'Plus Jakarta Sans', sans-serif" };
+
+            // 1. Status Doughnut
+            chartInstances.status = new Chart(document.getElementById('chartStatus'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['To Do', 'In Progress', 'In Review', 'Completed'],
+                    datasets: [{
+                        data: [
+                            statusDist.todo || overview.total_tasks - overview.completed_tasks - overview.in_progress_tasks || 0,
+                            statusDist.in_progress || overview.in_progress_tasks || 0,
+                            statusDist.review || 0,
+                            statusDist.completed || overview.completed_tasks || 0
+                        ],
+                        backgroundColor: ['#8E9BAA', '#4A7C6F', '#E8913A', '#27AE60'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: chartFont } } } }
+            });
+
+            // 2. Team Workload Bar
+            chartInstances.workload = new Chart(document.getElementById('chartWorkload'), {
+                type: 'bar',
+                data: {
+                    labels: employees.map(function (e) { return e.name; }),
+                    datasets: [{
+                        label: 'Total Tasks',
+                        data: employees.map(function (e) { return e.total_tasks || 0; }),
+                        backgroundColor: employees.map(function (e) { return e.avatar_color || '#4A7C6F'; }),
+                        borderRadius: 6,
+                        barThickness: 24
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: chartFont } },
+                        y: { grid: { display: false }, ticks: { font: chartFont } }
+                    }
+                }
+            });
+
+            // 3. Priority Pie
+            var byPriority = { low: 0, medium: 0, high: 0, critical: 0 };
+            allTasks.forEach(function (t) { if (byPriority[t.priority] !== undefined) byPriority[t.priority]++; });
+            chartInstances.priority = new Chart(document.getElementById('chartPriority'), {
+                type: 'pie',
+                data: {
+                    labels: ['Low', 'Medium', 'High', 'Critical'],
+                    datasets: [{
+                        data: [byPriority.low, byPriority.medium, byPriority.high, byPriority.critical],
+                        backgroundColor: ['#6C757D', '#E8913A', '#D35400', '#C0392B'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: chartFont } } } }
+            });
+
+            // 4. Completion Trend
+            var trend = teamData.completion_trend || [];
+            chartInstances.trend = new Chart(document.getElementById('chartTrend'), {
+                type: 'line',
+                data: {
+                    labels: trend.map(function (d) { return d.date; }),
+                    datasets: [{
+                        label: 'Completed',
+                        data: trend.map(function (d) { return d.count; }),
+                        borderColor: '#4A7C6F',
+                        backgroundColor: 'rgba(74,124,111,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#4A7C6F'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: chartFont } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: chartFont, stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        function renderEmployeeDrill(employees) {
+            if (!employees.length) { els.employeeDrill.innerHTML = '<div class="empty-state"><span class="text-muted">No employees found</span></div>'; return; }
+            els.employeeDrill.innerHTML = employees.map(function (e, i) {
+                return '<div class="employee-drill-card glass-light" style="animation-delay:' + (i * 100) + 'ms" onclick="loadEmployeeDetail(\'' + e.id + '\')">' +
+                    '<div class="avatar avatar-lg" style="background:' + escapeHtml(e.avatar_color) + ';margin:0 auto var(--space-sm)">' + getInitial(e.name) + '</div>' +
+                    '<div style="font-weight:600;margin-bottom:4px">' + escapeHtml(e.name) + '</div>' +
+                    '<div class="text-sm text-muted">' + (e.total_tasks || 0) + ' tasks · ' + (e.completion_rate || 0) + '% done</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        window.loadEmployeeDetail = function (empId) {
+            TaskFlowApp.api('/api/analytics/employee/' + empId).then(function (data) {
+                var e = data.employee;
+                var m = data.metrics;
+                var html = '<div class="chart-card glass-light glass-light--static" style="grid-column:1/-1;text-align:left">' +
+                    '<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">' +
+                        '<div class="avatar avatar-lg" style="background:' + escapeHtml(e.avatar_color) + '">' + getInitial(e.name) + '</div>' +
+                        '<div><h3 style="font-family:var(--font-body);font-weight:700;font-size:18px">' + escapeHtml(e.name) + '</h3><div class="text-sm text-muted">' + escapeHtml(e.email) + '</div></div>' +
+                    '</div>' +
+                    '<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">' +
+                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700">' + (m.total_assigned || 0) + '</div><div class="text-xs text-muted">Total</div></div>' +
+                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--color-accent)">' + (m.in_progress || 0) + '</div><div class="text-xs text-muted">In Progress</div></div>' +
+                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--color-success)">' + (m.completed || 0) + '</div><div class="text-xs text-muted">Completed</div></div>' +
+                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--color-critical)">' + (m.overdue || 0) + '</div><div class="text-xs text-muted">Overdue</div></div>' +
+                    '</div>' +
+                '</div>';
+                els.employeeDrill.innerHTML = html + '<button class="btn btn-ghost btn-sm mt-base" onclick="loadAnalytics()">← Back to all</button>';
+            });
+        };
+
+        // ── Team View ──
+        function loadTeam() {
+            Promise.all([
+                TaskFlowApp.api('/api/users'),
+                TaskFlowApp.api('/api/users/online')
+            ]).then(function (results) {
+                var users = results[0];
+                var onlineData = results[1];
+                var onlineIds = (onlineData.online || []).map(function (u) { return u.id; });
+                var employees = users.filter(function (u) { return u.role === 'employee'; });
+
+                els.teamGrid.innerHTML = employees.map(function (e, i) {
+                    var isOnline = onlineIds.indexOf(e.id) !== -1;
+                    return '<div class="team-card glass-light glass-light--static" style="animation-delay:' + (i * 100) + 'ms">' +
+                        '<div class="team-card__avatar" style="background:' + escapeHtml(e.avatar_color) + '">' +
+                            getInitial(e.name) +
+                            '<span class="presence-dot ' + (isOnline ? 'online' : 'offline') + '" data-presence="' + e.id + '"></span>' +
+                        '</div>' +
+                        '<div class="team-card__name">' + escapeHtml(e.name) + '</div>' +
+                        '<div class="team-card__role">' + escapeHtml(e.email) + '</div>' +
+                        '<div class="team-card__stats" id="teamStats_' + e.id + '"></div>' +
+                        '<div class="team-card__actions">' +
+                            '<button class="btn btn-ghost btn-sm" onclick="switchView(\'dashboard\')">View Tasks</button>' +
+                            '<button class="btn btn-accent btn-sm" onclick="openCreateModal(\'' + e.id + '\')">Assign Task</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+
+                // Load stats per employee
+                employees.forEach(function (e) {
+                    TaskFlowApp.api('/api/analytics/employee/' + e.id).then(function (data) {
+                        var m = data.metrics;
+                        var container = document.getElementById('teamStats_' + e.id);
+                        if (container) {
+                            container.innerHTML =
+                                '<div><div class="team-card__stat-value">' + (m.total_assigned || 0) + '</div><div class="team-card__stat-label">Tasks</div></div>' +
+                                '<div><div class="team-card__stat-value">' + (m.in_progress || 0) + '</div><div class="team-card__stat-label">Active</div></div>' +
+                                '<div><div class="team-card__stat-value">' + (m.completed || 0) + '</div><div class="team-card__stat-label">Done</div></div>' +
+                                '<div><div class="team-card__stat-value">' + (m.completion_rate || 0) + '%</div><div class="team-card__stat-label">Rate</div></div>';
+                        }
+                    });
+                });
+            });
+        }
+
+        // ── Notifications ──
+        function loadNotifications() {
+            TaskFlowApp.api('/api/notifications').then(function (data) {
+                var notifs = data.notifications || [];
+                if (notifs.length === 0) {
+                    els.notificationList.innerHTML = '<div class="notification-empty">No notifications yet</div>';
+                    return;
+                }
+                els.notificationList.innerHTML = notifs.map(function (n) {
+                    return '<div class="notification-item' + (n.is_read ? '' : ' unread') + '" onclick="markRead(\'' + n.id + '\'' + (n.task_id ? ',\'' + n.task_id + '\'' : ',null') + ')">' +
+                        '<span class="notification-item__dot"></span>' +
+                        '<div class="notification-item__content">' +
+                            '<div class="notification-item__title">' + escapeHtml(n.title) + '</div>' +
+                            '<div class="notification-item__message">' + escapeHtml(n.message) + '</div>' +
+                            '<div class="notification-item__time">' + TaskFlowApp.timeAgo(n.created_at) + '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            }).catch(function (err) {
+                console.error('[Manager] Failed to load notifications:', err);
+                els.notificationList.innerHTML = '<div class="notification-empty">Failed to load notifications</div>';
+            });
+        }
+
+        window.markRead = function (notifId, taskId) {
+            TaskFlowApp.api('/api/notifications/' + notifId + '/read', { method: 'PATCH' })
+                .then(function () {
+                    loadNotifications();
+                    TaskFlowApp.unreadCount = Math.max(0, TaskFlowApp.unreadCount - 1);
+                    TaskFlowApp._updateBadge();
+                    updateSidebarBadge();
+                    if (taskId) openDrawer(taskId);
+                });
+        };
+
+        window.markAllRead = function () {
+            TaskFlowApp.api('/api/notifications/read-all', { method: 'PATCH' })
+                .then(function () {
+                    loadNotifications();
+                    TaskFlowApp.resetBadge();
+                    updateSidebarBadge();
+                });
+        };
+
+        function updateSidebarBadge() {
+            if (TaskFlowApp.unreadCount > 0) {
+                els.sidebarBadge.textContent = TaskFlowApp.unreadCount > 99 ? '99+' : TaskFlowApp.unreadCount;
+                els.sidebarBadge.classList.remove('hidden');
+            } else {
+                els.sidebarBadge.classList.add('hidden');
+            }
+        }
+
+        // ── Presence ──
+        function renderPresence() {
+            var employees = allUsers.filter(function (u) { return u.role === 'employee'; });
+            els.sidebarPresence.innerHTML = employees.map(function (e) {
+                var isOnline = TaskFlowApp.onlineUsers.has(e.id);
+                return '<div class="presence-item">' +
+                    '<span class="presence-dot ' + (isOnline ? 'online' : 'offline') + '" data-sidebar-presence="' + e.id + '"></span>' +
+                    '<span>' + escapeHtml(e.name) + '</span>' +
+                '</div>';
+            }).join('');
+        }
+
+        // ── View Switching ──
+        window.switchView = function (viewName) {
+            // Hide all views
+            document.querySelectorAll('.content-view').forEach(function (v) { v.classList.remove('active'); });
+
+            // Show target
+            var viewMap = { dashboard: 'viewDashboard', analytics: 'viewAnalytics', team: 'viewTeam', notifications: 'viewNotifications' };
+            var targetEl = document.getElementById(viewMap[viewName]);
+            if (targetEl) targetEl.classList.add('active');
+
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+            var activeNav = document.querySelector('.nav-item[data-view="' + viewName + '"]');
+            if (activeNav) activeNav.classList.add('active');
+
+            // Update title
+            var titles = { dashboard: 'Dashboard', analytics: 'Analytics', team: 'Team', notifications: 'Notifications' };
+            els.pageTitle.textContent = titles[viewName] || 'Dashboard';
+
+            // Lazy load data
+            if (viewName === 'analytics') loadAnalytics();
+            if (viewName === 'team') loadTeam();
+            if (viewName === 'notifications') loadNotifications();
+        };
+
+        // ── Search ──
+        window.handleSearch = function (term) {
+            searchTerm = term;
+            renderKanban(allTasks);
+        };
+
+        // ── Sidebar ──
+        window.toggleSidebar = function () {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        };
+
+        window.switchUser = function () {
+            sessionStorage.clear();
+            window.location.href = '/login.html';
+        };
+
+        window.toggleSound = function () {
+            var on = TaskFlowApp.toggleSound();
+            var label = document.getElementById('soundLabel');
+            var icon = document.getElementById('soundIcon');
+            if (label) label.textContent = on ? 'Sound On' : 'Sound Off';
+            if (icon) {
+                if (on) {
+                    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+                } else {
+                    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+                }
+            }
+        };
+
+        // ── Socket.IO Hooks ──
+        function setupHooks() {
+            TaskFlowApp.onTaskAssigned = function () {
+                loadDashboard();
+            };
+
+            TaskFlowApp.onTaskUpdated = function () {
+                loadDashboard();
+                if (openDrawerTaskId) openDrawer(openDrawerTaskId);
+            };
+
+            TaskFlowApp.onTaskDeleted = function (data) {
+                if (openDrawerTaskId === data.taskId) closeDrawer();
+                loadDashboard();
+            };
+
+            TaskFlowApp.onProgressUpdate = function (data) {
+                // Update card progress in-place
+                var card = document.querySelector('[data-task-id="' + data.taskId + '"]');
+                if (card) {
+                    var fill = card.querySelector('.task-card__progress-fill');
+                    var text = card.querySelector('.task-card__progress-text');
+                    if (fill) fill.style.width = data.newProgress + '%';
+                    if (text) text.textContent = data.newProgress + '%';
+                }
+                // Refresh drawer if open for this task
+                if (openDrawerTaskId === data.taskId) openDrawer(data.taskId);
+                // Refresh stats
+                TaskFlowApp.api('/api/tasks/stats').then(renderStats);
+            };
+
+            TaskFlowApp.onStatusChange = function () {
+                loadDashboard();
+                if (openDrawerTaskId) openDrawer(openDrawerTaskId);
+            };
+
+            TaskFlowApp.onNewComment = function (data) {
+                if (openDrawerTaskId === data.taskId) openDrawer(data.taskId);
+            };
+
+            TaskFlowApp.onPresenceChange = function () {
+                renderPresence();
+                // Update team view presence dots — set ALL dots to offline first, then online for active users
+                var allDots = document.querySelectorAll('[data-presence]');
+                allDots.forEach(function (dot) {
+                    dot.className = 'presence-dot offline';
+                });
+                TaskFlowApp.onlineUsers.forEach(function (u, id) {
+                    var dots = document.querySelectorAll('[data-presence="' + id + '"]');
+                    dots.forEach(function (dot) {
+                        dot.className = 'presence-dot online';
+                    });
+                });
+            };
+
+            TaskFlowApp.onNotificationNew = function () {
+                updateSidebarBadge();
+                if (document.getElementById('viewNotifications').classList.contains('active')) {
+                    loadNotifications();
+                }
+            };
+
+            TaskFlowApp.onReconnect = function () {
+                loadDashboard();
+                loadUsers();
+            };
+        }
+
+        // ── Expose loadAnalytics for back button ──
+        window.loadAnalytics = loadAnalytics;
+
+        // ── Boot ──
+        init();
+
+    })();
+    </script>
+</body>
+</html>

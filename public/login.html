@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow — Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .login-form {
+            max-width: 380px;
+            margin: 0 auto var(--space-3xl);
+            text-align: left;
+        }
+        .login-form-group {
+            margin-bottom: var(--space-lg);
+        }
+        .login-form-group label {
+            display: block;
+            font-size: var(--fs-sm);
+            font-weight: 600;
+            color: var(--text-on-dark-muted);
+            margin-bottom: var(--space-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .login-form-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 var(--space-md);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius-lg);
+            color: var(--text-on-dark);
+            font-family: var(--font-body);
+            font-size: var(--fs-base);
+            transition: all var(--duration-base) var(--ease-default);
+            box-sizing: border-box;
+        }
+        .login-form-input::placeholder {
+            color: rgba(255,255,255,0.35);
+        }
+        .login-form-input:focus {
+            outline: none;
+            border-color: var(--color-aqua);
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 0 0 3px rgba(125,211,192,0.15);
+        }
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            background: linear-gradient(135deg, var(--color-aqua), var(--color-accent));
+            color: white;
+            font-family: var(--font-body);
+            font-size: var(--fs-base);
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--duration-base) var(--ease-default);
+            margin-top: var(--space-md);
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(125,211,192,0.3);
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .login-error {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #fca5a5;
+            font-size: var(--fs-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+            display: none;
+            text-align: center;
+        }
+        .login-error.visible {
+            display: block;
+            animation: tf-fadeSlideUp 0.3s var(--ease-default) both;
+        }
+    </style>
+</head>
+<body class="bg-gradient-mesh login-page">
+
+    <div class="login-container">
+        <!-- Logo -->
+        <div class="login-header">
+            <h1 class="login-title">TaskFlow</h1>
+            <p class="login-subtitle">Sign in to your account</p>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form" id="loginForm" autocomplete="on">
+            <div class="login-error" id="loginError"></div>
+
+            <div class="login-form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" class="login-form-input"
+                       placeholder="you@taskflow.com" required autocomplete="email" autofocus>
+            </div>
+
+            <div class="login-form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="login-form-input"
+                       placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+        </form>
+
+        <!-- Footer -->
+        <p class="login-footer">Real-time task management for teams</p>
+    </div>
+
+    <script>
+    (function () {
+        var form = document.getElementById('loginForm');
+        var emailInput = document.getElementById('email');
+        var passwordInput = document.getElementById('password');
+        var errorEl = document.getElementById('loginError');
+        var loginBtn = document.getElementById('loginBtn');
+
+        // If already has a valid token, redirect
+        var existingToken = sessionStorage.getItem('taskflow_token');
+        if (existingToken) {
+            var existingRole = sessionStorage.getItem('taskflow_user_role');
+            if (existingRole) {
+                window.location.href = existingRole === 'manager' ? '/manager.html' : '/employee.html';
+                return;
+            }
+        }
+
+        function showError(msg) {
+            errorEl.textContent = msg;
+            errorEl.classList.add('visible');
+        }
+
+        function hideError() {
+            errorEl.classList.remove('visible');
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            hideError();
+
+            var email = emailInput.value.trim();
+            var password = passwordInput.value;
+
+            if (!email || !password) {
+                showError('Please enter both email and password.');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(function (r) {
+                if (!r.ok) return r.json().then(function (err) { return Promise.reject(err); });
+                return r.json();
+            })
+            .then(function (data) {
+                // Store token and role in sessionStorage
+                sessionStorage.setItem('taskflow_token', data.token);
+                sessionStorage.setItem('taskflow_user_role', data.user.role);
+
+                // Redirect based on role
+                window.location.href = data.user.role === 'manager' ? '/manager.html' : '/employee.html';
+            })
+            .catch(function (err) {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+                showError(err.error || 'Login failed. Please try again.');
+            });
+        });
+    })();
+    </script>
+</body>
+</html>
