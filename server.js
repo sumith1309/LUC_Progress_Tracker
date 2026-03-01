@@ -417,7 +417,7 @@ function isValidStatusTransition(oldStatus, newStatus, role) {
 app.get('/api/users', async (req, res) => {
     try {
         const users = await db.collection('users')
-            .find()
+            .find({}, { projection: { password_hash: 0 } })
             .sort({ role: -1, created_at: 1 })
             .toArray();
         res.json(normalizeDocs(users));
@@ -441,7 +441,10 @@ app.get('/api/users/online', (req, res) => {
 // GET /api/users/:id — Single user detail
 app.get('/api/users/:id', async (req, res) => {
     try {
-        const user = await db.collection('users').findOne({ _id: req.params.id });
+        const user = await db.collection('users').findOne(
+            { _id: req.params.id },
+            { projection: { password_hash: 0 } }
+        );
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(normalizeDoc(user));
     } catch (err) {
