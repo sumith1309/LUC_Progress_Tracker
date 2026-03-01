@@ -1536,6 +1536,11 @@ h4 { font-size: var(--fs-md); }
   max-height: 260px;
 }
 
+.chart-card div[id^="chart"],
+.chart-card div[id^="emp"] {
+  min-height: 280px;
+}
+
 .employee-drill {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

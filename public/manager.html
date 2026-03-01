@@ -215,7 +215,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <script>
     (function () {
         'use strict';
@@ -232,7 +232,7 @@
         var allTasks = [];
         var allUsers = [];
         var openDrawerTaskId = null;
-        var chartInstances = {};
+        var echartInstances = [];
         var searchTerm = '';
 
         // ── DOM Cache ──
@@ -760,6 +760,10 @@
 
         // ── Analytics ──
         function loadAnalytics() {
+            // Restore heading (hidden by employee detail drill-down)
+            var heading = document.querySelector('#viewAnalytics > h3');
+            if (heading) heading.style.display = '';
+
             Promise.all([
                 TaskFlowApp.api('/api/analytics/overview'),
                 TaskFlowApp.api('/api/analytics/team')
@@ -771,137 +775,301 @@
             });
         }
 
+        function disposeCharts() {
+            echartInstances.forEach(function (c) { if (c && c.dispose) c.dispose(); });
+            echartInstances = [];
+        }
+
+        function initEChart(container) {
+            var instance = echarts.init(container);
+            echartInstances.push(instance);
+            return instance;
+        }
+
         function renderCharts(overview, teamData) {
+            disposeCharts();
+
             var statusDist = teamData.status_distribution || overview;
             var employees = teamData.employees || [];
 
             els.chartsGrid.innerHTML =
-                '<div class="chart-card glass-light glass-light--static" style="animation-delay:0ms"><div class="chart-card__title">Task Distribution</div><canvas id="chartStatus"></canvas></div>' +
-                '<div class="chart-card glass-light glass-light--static" style="animation-delay:100ms"><div class="chart-card__title">Team Workload</div><canvas id="chartWorkload"></canvas></div>' +
-                '<div class="chart-card glass-light glass-light--static" style="animation-delay:200ms"><div class="chart-card__title">Priority Breakdown</div><canvas id="chartPriority"></canvas></div>' +
-                '<div class="chart-card glass-light glass-light--static" style="animation-delay:300ms"><div class="chart-card__title">Completion Trend</div><canvas id="chartTrend"></canvas></div>';
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:0ms"><div class="chart-card__title">Task Distribution</div><div id="chartStatus" style="width:100%;height:300px"></div></div>' +
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:100ms"><div class="chart-card__title">Team Workload</div><div id="chartWorkload" style="width:100%;height:300px"></div></div>' +
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:200ms"><div class="chart-card__title">Priority Breakdown</div><div id="chartPriority" style="width:100%;height:300px"></div></div>' +
+                '<div class="chart-card glass-light glass-light--static" style="animation-delay:300ms"><div class="chart-card__title">Completion Trend</div><div id="chartTrend" style="width:100%;height:300px"></div></div>';
 
-            // Destroy old charts
-            Object.keys(chartInstances).forEach(function (k) { chartInstances[k].destroy(); });
-            chartInstances = {};
-
-            var chartFont = { family: "'Plus Jakarta Sans', sans-serif" };
+            var fontFamily = "'Plus Jakarta Sans', sans-serif";
 
             // 1. Status Doughnut
-            chartInstances.status = new Chart(document.getElementById('chartStatus'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['To Do', 'In Progress', 'In Review', 'Completed'],
-                    datasets: [{
-                        data: [
-                            statusDist.todo || overview.total_tasks - overview.completed_tasks - overview.in_progress_tasks || 0,
-                            statusDist.in_progress || overview.in_progress_tasks || 0,
-                            statusDist.review || 0,
-                            statusDist.completed || overview.completed_tasks || 0
-                        ],
-                        backgroundColor: ['#8E9BAA', '#4A7C6F', '#E8913A', '#27AE60'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: chartFont } } } }
+            var statusChart = initEChart(document.getElementById('chartStatus'));
+            statusChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', textStyle: { fontFamily: fontFamily } },
+                legend: { bottom: 0, textStyle: { fontFamily: fontFamily, color: '#5E6C84' } },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '45%'],
+                    avoidLabelOverlap: true,
+                    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false },
+                    emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', fontFamily: fontFamily }, itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.2)' } },
+                    data: [
+                        { value: statusDist.todo || 0, name: 'To Do', itemStyle: { color: '#8E9BAA' } },
+                        { value: statusDist.in_progress || overview.in_progress_tasks || 0, name: 'In Progress', itemStyle: { color: '#4A7C6F' } },
+                        { value: statusDist.review || 0, name: 'In Review', itemStyle: { color: '#E8913A' } },
+                        { value: statusDist.completed || overview.completed_tasks || 0, name: 'Completed', itemStyle: { color: '#27AE60' } }
+                    ]
+                }],
+                animationType: 'scale',
+                animationEasing: 'elasticOut'
             });
 
             // 2. Team Workload Bar
-            chartInstances.workload = new Chart(document.getElementById('chartWorkload'), {
-                type: 'bar',
-                data: {
-                    labels: employees.map(function (e) { return e.name; }),
-                    datasets: [{
-                        label: 'Total Tasks',
-                        data: employees.map(function (e) { return e.total_tasks || 0; }),
-                        backgroundColor: employees.map(function (e) { return e.avatar_color || '#4A7C6F'; }),
-                        borderRadius: 6,
-                        barThickness: 24
-                    }]
+            var workloadChart = initEChart(document.getElementById('chartWorkload'));
+            workloadChart.setOption({
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, textStyle: { fontFamily: fontFamily } },
+                grid: { left: 80, right: 40, top: 10, bottom: 20 },
+                xAxis: { type: 'value', splitLine: { show: false }, axisLabel: { fontFamily: fontFamily, color: '#5E6C84' } },
+                yAxis: {
+                    type: 'category',
+                    data: employees.map(function (e) { return e.name; }).reverse(),
+                    axisLine: { show: false }, axisTick: { show: false },
+                    axisLabel: { fontFamily: fontFamily, color: '#1A1A2E', fontWeight: 600 }
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: chartFont } },
-                        y: { grid: { display: false }, ticks: { font: chartFont } }
-                    }
-                }
+                series: [{
+                    type: 'bar',
+                    data: employees.map(function (e) {
+                        return {
+                            value: e.total_tasks || 0,
+                            itemStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                                    { offset: 0, color: e.avatar_color || '#4A7C6F' },
+                                    { offset: 1, color: (e.avatar_color || '#4A7C6F') + 'AA' }
+                                ]),
+                                borderRadius: [0, 6, 6, 0]
+                            }
+                        };
+                    }).reverse(),
+                    barWidth: 24,
+                    label: { show: true, position: 'right', fontFamily: fontFamily, color: '#5E6C84', fontWeight: 600 }
+                }]
             });
 
             // 3. Priority Pie
             var byPriority = { low: 0, medium: 0, high: 0, critical: 0 };
             allTasks.forEach(function (t) { if (byPriority[t.priority] !== undefined) byPriority[t.priority]++; });
-            chartInstances.priority = new Chart(document.getElementById('chartPriority'), {
-                type: 'pie',
-                data: {
-                    labels: ['Low', 'Medium', 'High', 'Critical'],
-                    datasets: [{
-                        data: [byPriority.low, byPriority.medium, byPriority.high, byPriority.critical],
-                        backgroundColor: ['#6C757D', '#E8913A', '#D35400', '#C0392B'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: chartFont } } } }
+            var priorityChart = initEChart(document.getElementById('chartPriority'));
+            priorityChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', textStyle: { fontFamily: fontFamily } },
+                legend: { bottom: 0, textStyle: { fontFamily: fontFamily, color: '#5E6C84' } },
+                series: [{
+                    type: 'pie',
+                    radius: '65%',
+                    center: ['50%', '45%'],
+                    roseType: 'area',
+                    itemStyle: { borderRadius: 6, shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.08)' },
+                    label: { fontFamily: fontFamily, color: '#5E6C84' },
+                    emphasis: { itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.15)' } },
+                    data: [
+                        { value: byPriority.low, name: 'Low', itemStyle: { color: '#6C757D' } },
+                        { value: byPriority.medium, name: 'Medium', itemStyle: { color: '#E8913A' } },
+                        { value: byPriority.high, name: 'High', itemStyle: { color: '#D35400' } },
+                        { value: byPriority.critical, name: 'Critical', itemStyle: { color: '#C0392B' } }
+                    ]
+                }]
             });
 
             // 4. Completion Trend
             var trend = teamData.completion_trend || [];
-            chartInstances.trend = new Chart(document.getElementById('chartTrend'), {
-                type: 'line',
-                data: {
-                    labels: trend.map(function (d) { return d.date; }),
-                    datasets: [{
-                        label: 'Completed',
-                        data: trend.map(function (d) { return d.count; }),
-                        borderColor: '#4A7C6F',
-                        backgroundColor: 'rgba(74,124,111,0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#4A7C6F'
-                    }]
+            var trendChart = initEChart(document.getElementById('chartTrend'));
+            trendChart.setOption({
+                tooltip: { trigger: 'axis', textStyle: { fontFamily: fontFamily }, axisPointer: { type: 'cross', label: { fontFamily: fontFamily } } },
+                grid: { left: 40, right: 20, top: 20, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: trend.map(function (d) { return d.date.slice(5); }),
+                    boundaryGap: false,
+                    axisLine: { lineStyle: { color: '#E0E0E0' } },
+                    axisLabel: { fontFamily: fontFamily, color: '#5E6C84', fontSize: 11 }
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: chartFont } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: chartFont, stepSize: 1 } }
+                yAxis: {
+                    type: 'value', minInterval: 1,
+                    splitLine: { lineStyle: { color: 'rgba(0,0,0,0.04)' } },
+                    axisLabel: { fontFamily: fontFamily, color: '#5E6C84' }
+                },
+                series: [{
+                    type: 'line',
+                    data: trend.map(function (d) { return d.count; }),
+                    smooth: 0.4,
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    lineStyle: { width: 3, color: '#4A7C6F' },
+                    itemStyle: { color: '#4A7C6F', borderWidth: 2, borderColor: '#fff' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(74,124,111,0.25)' },
+                            { offset: 1, color: 'rgba(74,124,111,0.02)' }
+                        ])
                     }
-                }
+                }]
             });
         }
 
         function renderEmployeeDrill(employees) {
             if (!employees.length) { els.employeeDrill.innerHTML = '<div class="empty-state"><span class="text-muted">No employees found</span></div>'; return; }
             els.employeeDrill.innerHTML = employees.map(function (e, i) {
-                return '<div class="employee-drill-card glass-light" style="animation-delay:' + (i * 100) + 'ms" onclick="loadEmployeeDetail(\'' + e.id + '\')">' +
+                var rate = e.completion_rate || 0;
+                var rateColor = rate >= 75 ? '#27AE60' : rate >= 50 ? '#E8913A' : '#C0392B';
+                return '<div class="employee-drill-card glass-light" style="animation-delay:' + (i * 100) + 'ms;cursor:pointer" onclick="loadEmployeeDetail(\'' + e.id + '\')">' +
                     '<div class="avatar avatar-lg" style="background:' + escapeHtml(e.avatar_color) + ';margin:0 auto var(--space-sm)">' + getInitial(e.name) + '</div>' +
-                    '<div style="font-weight:600;margin-bottom:4px">' + escapeHtml(e.name) + '</div>' +
-                    '<div class="text-sm text-muted">' + (e.total_tasks || 0) + ' tasks · ' + (e.completion_rate || 0) + '% done</div>' +
+                    '<div style="font-weight:700;margin-bottom:6px;font-size:15px">' + escapeHtml(e.name) + '</div>' +
+                    '<div style="font-size:12px;color:#5E6C84;margin-bottom:8px">' + (e.total_tasks || 0) + ' tasks' + (e.overdue ? ' · <span style="color:#C0392B">' + e.overdue + ' overdue</span>' : '') + '</div>' +
+                    '<div style="background:rgba(0,0,0,0.06);border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px">' +
+                        '<div style="height:100%;width:' + rate + '%;background:' + rateColor + ';border-radius:4px;transition:width 0.6s ease"></div>' +
+                    '</div>' +
+                    '<div style="font-size:11px;font-weight:600;color:' + rateColor + '">' + rate + '% completed</div>' +
+                    '<div style="font-size:11px;color:#5E6C84;margin-top:2px">On-time: ' + (e.on_time_rate || 0) + '%</div>' +
                 '</div>';
             }).join('');
         }
 
         window.loadEmployeeDetail = function (empId) {
             TaskFlowApp.api('/api/analytics/employee/' + empId).then(function (data) {
+                disposeCharts();
+
                 var e = data.employee;
                 var m = data.metrics;
-                var html = '<div class="chart-card glass-light glass-light--static" style="grid-column:1/-1;text-align:left">' +
-                    '<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">' +
-                        '<div class="avatar avatar-lg" style="background:' + escapeHtml(e.avatar_color) + '">' + getInitial(e.name) + '</div>' +
-                        '<div><h3 style="font-family:var(--font-body);font-weight:700;font-size:18px">' + escapeHtml(e.name) + '</h3><div class="text-sm text-muted">' + escapeHtml(e.email) + '</div></div>' +
-                    '</div>' +
-                    '<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">' +
-                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700">' + (m.total_assigned || 0) + '</div><div class="text-xs text-muted">Total</div></div>' +
-                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--color-accent)">' + (m.in_progress || 0) + '</div><div class="text-xs text-muted">In Progress</div></div>' +
-                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--color-success)">' + (m.completed || 0) + '</div><div class="text-xs text-muted">Completed</div></div>' +
-                        '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--color-critical)">' + (m.overdue || 0) + '</div><div class="text-xs text-muted">Overdue</div></div>' +
+                var tasks = data.recent_tasks || [];
+
+                // Status badge helper
+                var statusColors = { todo: '#8E9BAA', in_progress: '#4A7C6F', review: '#E8913A', completed: '#27AE60' };
+                var statusLabels = { todo: 'To Do', in_progress: 'In Progress', review: 'In Review', completed: 'Completed' };
+                var priorityColors = { low: '#6C757D', medium: '#E8913A', high: '#D35400', critical: '#C0392B' };
+
+                // Header + Stats
+                var html = '<div style="margin-bottom:var(--space-xl)">' +
+                    '<button class="btn btn-ghost btn-sm" onclick="loadAnalytics()" style="margin-bottom:var(--space-base)">&#8592; Back to Overview</button>' +
+                    '<div class="chart-card glass-light glass-light--static" style="text-align:left">' +
+                        '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">' +
+                            '<div class="avatar avatar-lg" style="background:' + escapeHtml(e.avatar_color) + '">' + getInitial(e.name) + '</div>' +
+                            '<div><h3 style="font-family:var(--font-body);font-weight:700;font-size:20px;margin:0">' + escapeHtml(e.name) + '</h3><div class="text-sm text-muted">' + escapeHtml(e.email) + '</div></div>' +
+                        '</div>' +
+                        '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px">' +
+                            '<div style="text-align:center;padding:12px 8px;background:rgba(0,0,0,0.03);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#1A1A2E">' + (m.total_assigned || 0) + '</div><div style="font-size:11px;color:#5E6C84;margin-top:4px">Total</div></div>' +
+                            '<div style="text-align:center;padding:12px 8px;background:rgba(0,0,0,0.03);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#4A7C6F">' + (m.in_progress || 0) + '</div><div style="font-size:11px;color:#5E6C84;margin-top:4px">In Progress</div></div>' +
+                            '<div style="text-align:center;padding:12px 8px;background:rgba(0,0,0,0.03);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#E8913A">' + (m.in_review || 0) + '</div><div style="font-size:11px;color:#5E6C84;margin-top:4px">In Review</div></div>' +
+                            '<div style="text-align:center;padding:12px 8px;background:rgba(0,0,0,0.03);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#27AE60">' + (m.completed || 0) + '</div><div style="font-size:11px;color:#5E6C84;margin-top:4px">Completed</div></div>' +
+                            '<div style="text-align:center;padding:12px 8px;background:rgba(0,0,0,0.03);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#C0392B">' + (m.overdue || 0) + '</div><div style="font-size:11px;color:#5E6C84;margin-top:4px">Overdue</div></div>' +
+                            '<div style="text-align:center;padding:12px 8px;background:rgba(0,0,0,0.03);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#1B3A4B">' + (m.avg_completion_time_hours || 0) + 'h</div><div style="font-size:11px;color:#5E6C84;margin-top:4px">Avg Time</div></div>' +
+                        '</div>' +
                     '</div>' +
                 '</div>';
-                els.employeeDrill.innerHTML = html + '<button class="btn btn-ghost btn-sm mt-base" onclick="loadAnalytics()">← Back to all</button>';
+
+                // Charts row
+                html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xl);margin-bottom:var(--space-xl)">' +
+                    '<div class="chart-card glass-light glass-light--static"><div class="chart-card__title">Task Status Breakdown</div><div id="empStatusChart" style="width:100%;height:280px"></div></div>' +
+                    '<div class="chart-card glass-light glass-light--static"><div class="chart-card__title">Performance Gauges</div><div id="empGaugeChart" style="width:100%;height:280px"></div></div>' +
+                '</div>';
+
+                // Recent tasks table
+                html += '<div class="chart-card glass-light glass-light--static" style="text-align:left">' +
+                    '<div class="chart-card__title">Recent Tasks</div>';
+                if (tasks.length === 0) {
+                    html += '<div class="text-sm text-muted" style="padding:20px 0;text-align:center">No tasks assigned yet</div>';
+                } else {
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+                        '<thead><tr style="border-bottom:2px solid rgba(0,0,0,0.06)">' +
+                            '<th style="text-align:left;padding:8px 12px;font-weight:600;color:#5E6C84">Title</th>' +
+                            '<th style="text-align:center;padding:8px 12px;font-weight:600;color:#5E6C84">Status</th>' +
+                            '<th style="text-align:center;padding:8px 12px;font-weight:600;color:#5E6C84">Priority</th>' +
+                            '<th style="text-align:center;padding:8px 12px;font-weight:600;color:#5E6C84">Due Date</th>' +
+                        '</tr></thead><tbody>';
+                    tasks.forEach(function (t) {
+                        var isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed';
+                        html += '<tr style="border-bottom:1px solid rgba(0,0,0,0.04)">' +
+                            '<td style="padding:10px 12px;font-weight:500;color:#1A1A2E">' + escapeHtml(t.title) + '</td>' +
+                            '<td style="text-align:center;padding:10px 12px"><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;color:white;background:' + (statusColors[t.status] || '#8E9BAA') + '">' + (statusLabels[t.status] || t.status) + '</span></td>' +
+                            '<td style="text-align:center;padding:10px 12px"><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;color:white;background:' + (priorityColors[t.priority] || '#6C757D') + '">' + (t.priority ? t.priority.charAt(0).toUpperCase() + t.priority.slice(1) : '—') + '</span></td>' +
+                            '<td style="text-align:center;padding:10px 12px;color:' + (isOverdue ? '#C0392B' : '#5E6C84') + ';font-weight:' + (isOverdue ? '600' : '400') + '">' + (t.due_date ? TaskFlowApp.formatDate(t.due_date) : '—') + '</td>' +
+                        '</tr>';
+                    });
+                    html += '</tbody></table>';
+                }
+                html += '</div>';
+
+                // Hide overview charts, show detail in employeeDrill
+                els.chartsGrid.innerHTML = '';
+                els.employeeDrill.innerHTML = html;
+                document.querySelector('#viewAnalytics > h3').style.display = 'none';
+
+                // Render ECharts for employee detail
+                var fontFamily = "'Plus Jakarta Sans', sans-serif";
+
+                // Task Status Doughnut
+                var empStatus = initEChart(document.getElementById('empStatusChart'));
+                empStatus.setOption({
+                    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', textStyle: { fontFamily: fontFamily } },
+                    legend: { bottom: 0, textStyle: { fontFamily: fontFamily, color: '#5E6C84', fontSize: 12 } },
+                    series: [{
+                        type: 'pie',
+                        radius: ['35%', '65%'],
+                        center: ['50%', '42%'],
+                        itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+                        label: { show: false },
+                        emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold', fontFamily: fontFamily } },
+                        data: [
+                            { value: m.todo || 0, name: 'To Do', itemStyle: { color: '#8E9BAA' } },
+                            { value: m.in_progress || 0, name: 'In Progress', itemStyle: { color: '#4A7C6F' } },
+                            { value: m.in_review || 0, name: 'In Review', itemStyle: { color: '#E8913A' } },
+                            { value: m.completed || 0, name: 'Completed', itemStyle: { color: '#27AE60' } }
+                        ]
+                    }],
+                    animationType: 'scale',
+                    animationEasing: 'elasticOut'
+                });
+
+                // Dual Gauge — Completion Rate + On-Time Rate
+                var empGauge = initEChart(document.getElementById('empGaugeChart'));
+                empGauge.setOption({
+                    series: [
+                        {
+                            type: 'gauge',
+                            center: ['28%', '55%'],
+                            radius: '75%',
+                            startAngle: 200,
+                            endAngle: -20,
+                            min: 0, max: 100,
+                            splitNumber: 5,
+                            pointer: { show: false },
+                            progress: { show: true, width: 14, roundCap: true, itemStyle: { color: '#4A7C6F' } },
+                            axisLine: { lineStyle: { width: 14, color: [[1, 'rgba(0,0,0,0.06)']] } },
+                            axisTick: { show: false },
+                            splitLine: { show: false },
+                            axisLabel: { show: false },
+                            title: { offsetCenter: [0, '30%'], fontSize: 12, fontFamily: fontFamily, color: '#5E6C84' },
+                            detail: { offsetCenter: [0, '-5%'], fontSize: 26, fontWeight: 700, fontFamily: fontFamily, color: '#4A7C6F', formatter: '{value}%' },
+                            data: [{ value: m.completion_rate || 0, name: 'Completion Rate' }]
+                        },
+                        {
+                            type: 'gauge',
+                            center: ['72%', '55%'],
+                            radius: '75%',
+                            startAngle: 200,
+                            endAngle: -20,
+                            min: 0, max: 100,
+                            splitNumber: 5,
+                            pointer: { show: false },
+                            progress: { show: true, width: 14, roundCap: true, itemStyle: { color: '#1B3A4B' } },
+                            axisLine: { lineStyle: { width: 14, color: [[1, 'rgba(0,0,0,0.06)']] } },
+                            axisTick: { show: false },
+                            splitLine: { show: false },
+                            axisLabel: { show: false },
+                            title: { offsetCenter: [0, '30%'], fontSize: 12, fontFamily: fontFamily, color: '#5E6C84' },
+                            detail: { offsetCenter: [0, '-5%'], fontSize: 26, fontWeight: 700, fontFamily: fontFamily, color: '#1B3A4B', formatter: '{value}%' },
+                            data: [{ value: m.on_time_delivery_rate || 0, name: 'On-Time Rate' }]
+                        }
+                    ]
+                });
             });
         };
 
@@ -1140,6 +1308,11 @@
 
         // ── Expose loadAnalytics for back button ──
         window.loadAnalytics = loadAnalytics;
+
+        // ── ECharts Resize Handler ──
+        window.addEventListener('resize', function () {
+            echartInstances.forEach(function (c) { if (c && c.resize) c.resize(); });
+        });
 
         // ── Boot ──
         init();
