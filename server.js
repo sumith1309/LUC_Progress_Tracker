@@ -110,26 +110,16 @@ async function initDatabase() {
     console.log('[DB] Indexes created');
 
     // Seed users if empty
-    const defaultHash = bcrypt.hashSync('taskflow123', 10);
     const userCount = await db.collection('users').countDocuments();
     if (userCount === 0) {
         const now = new Date().toISOString();
         await db.collection('users').insertMany([
-            { _id: uuidv4(), name: 'Ahmed', role: 'manager',  email: 'ahmed@taskflow.com', avatar_color: '#1B3A4B', password_hash: defaultHash, created_at: now },
-            { _id: uuidv4(), name: 'Sara',  role: 'employee', email: 'sara@taskflow.com',  avatar_color: '#4A7C6F', password_hash: defaultHash, created_at: now },
-            { _id: uuidv4(), name: 'Omar',  role: 'employee', email: 'omar@taskflow.com',  avatar_color: '#E8913A', password_hash: defaultHash, created_at: now },
-            { _id: uuidv4(), name: 'Layla', role: 'employee', email: 'layla@taskflow.com', avatar_color: '#8E6BBF', password_hash: defaultHash, created_at: now },
+            { _id: uuidv4(), name: 'Mushtaq',  role: 'manager',  email: 'mushtaq@learnerseducation.com',  avatar_color: '#1B3A4B', password_hash: bcrypt.hashSync('Mushtaq@LUC2025',  10), created_at: now },
+            { _id: uuidv4(), name: 'Sreejith', role: 'employee', email: 'Sreejith@learnerseducation.com', avatar_color: '#4A7C6F', password_hash: bcrypt.hashSync('Sreejith@LUC2025', 10), created_at: now },
+            { _id: uuidv4(), name: 'Creative', role: 'employee', email: 'Creative@learnerseducation.com', avatar_color: '#E8913A', password_hash: bcrypt.hashSync('Creative@LUC2025', 10), created_at: now },
+            { _id: uuidv4(), name: 'Indika',   role: 'employee', email: 'Indika@learnerseducation.com',   avatar_color: '#8E6BBF', password_hash: bcrypt.hashSync('Indika@LUC2025',   10), created_at: now },
         ]);
-        console.log('[DB] 4 users seeded (default password: taskflow123)');
-    } else {
-        // Migration: add password_hash to existing users that lack it
-        const updated = await db.collection('users').updateMany(
-            { password_hash: { $exists: false } },
-            { $set: { password_hash: defaultHash } }
-        );
-        if (updated.modifiedCount > 0) {
-            console.log(`[DB] Migrated ${updated.modifiedCount} user(s) with default password hash`);
-        }
+        console.log('[DB] 4 users seeded with LUC credentials');
     }
 
     await loadUsersCache();
