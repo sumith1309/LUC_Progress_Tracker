@@ -208,6 +208,9 @@ app.use((req, res, next) => {
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Redirect root to login page
+app.get('/', (req, res) => res.redirect('/login.html'));
+
 // ============================================================
 //  Section E1: Health & GridFS Download Routes
 //  Placed before user middleware — no auth needed
